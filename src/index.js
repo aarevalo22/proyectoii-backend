@@ -10,10 +10,11 @@ app.use(cors())
 app.use(bodyParser.json());
 
 const db = mysql.createConnection({
-   host: 'localhost',
+   host: '159.223.134.9',
    user: 'ayarevalog',
    password: '2019*AFvBFu1a',
-   database: 'employmentManagement'
+   database: 'employmentManagement',
+   insecureAuth: true
  });
 
 
