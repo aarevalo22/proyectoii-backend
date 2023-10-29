@@ -30,7 +30,7 @@ app.post("/login", (req, res) => {
     let sql = `SELECT U.*, R.tipo_rol AS rol
    FROM Usuarios U
    LEFT JOIN Roles R ON U.Roles_idRoles = R.idRoles
-   WHERE U.correo = ?`;
+   WHERE U.email = ?`;
 
     db.query(sql, [email], (err, result) => {
       let resp = result[0];
@@ -40,7 +40,7 @@ app.post("/login", (req, res) => {
           .json({ success: false, message: "Usuario no encontrado!" });
       }
       console.log(resp.rol !== "Estudiante");
-      if (resp.contraseña !== password) {
+      if (resp.password !== password) {
         return res
           .status(404)
           .json({ success: false, message: "Contraseña Incorrecta!" });
