@@ -1,6 +1,7 @@
 const express = require("express");
 const mysql = require("mysql");
 const cors = require("cors");
+const updateQuery = require('./utils/update-query')
 
 const app = express();
 const port = 3000;
@@ -63,7 +64,13 @@ app.post("/login", (req, res) => {
 
 app.get("/companies", async(req, res) => {
   try {
-    const sql = `SELECT * FROM Empresas`
+    const sql = `SELECT
+    Empresas.*, Tipo_Oferta.idtipo_oferta AS idTipo_Oferta, 
+    Carreras.nombre AS tipo_oferta
+    FROM Empresas
+    LEFT JOIN Tipo_Oferta ON Empresas.id = Empresas_id
+    LEFT JOIN Carreras ON Tipo_Oferta.Carreras_idCarrera = Carreras.idCarrera;
+  `
     db.query(sql, [], (err, result) => {
       if(err) {
         return res.status(404).json({ message: err.message });
@@ -78,3 +85,76 @@ app.get("/companies", async(req, res) => {
 app.listen(port, () => {
   console.log(`Backend listening at http://localhost:${port}`);
 });
+
+app.post("/companies", async(req,res) => {
+  try {
+    let { nombre, nit, descripcion, correo, telefono, direccion, tipo_empresa, tipo_oferta} = req.body
+    let sql = `INSERT INTO Empresas (nombre, nit, descripcion, correo, telefono, direccion, tipo_empresa) VALUES (?, ?, ?, ?, ?, ?, ?)`
+
+    db.query(sql, [nombre, nit, descripcion, correo, telefono, direccion, tipo_empresa], (err, result) => {
+      if(err) {
+        res.status(404).json({ message: err.message });
+      }
+      let sqlTipoOferta = `INSERT INTO Tipo_Oferta (estado, Carreras_idCarrera, Empresas_id) VALUES (?,?,?)`
+      db.query(sqlTipoOferta, ['Disponible', tipo_oferta, result.insertId], (err, result) => {
+        if(err) {
+          res.status(404).json({ message: err.message });
+        }
+        res.status(200).json({ succes: true, message: 'Registro Exitoso!'});
+      })
+    }) 
+  } catch (error) {
+    res.status(404).json({ message: error.message });
+  }
+})
+
+
+app.put("/companies/:id", async(req,res) => {
+  try {
+  let id = req.params.id;
+  const query = `UPDATE Empresas ${updateQuery(id, req.body)}`
+  const colVals = Object.values(req.body)
+    db.query(query, [...colVals], (err, result) => {
+      if(err) {
+        res.status(404).json({ message: err.message });
+      }
+      res.status(200).json({ succes: true, message: 'Empresa Actualizada'});
+    }) 
+  } catch (error) {
+    res.status(404).json({ message: error.message });
+  }
+})
+
+
+app.put("/oferta/:id", async(req,res) => {
+  try {
+  let id = req.params.id;
+  let { estado , tipo_oferta} = req.body
+  const query = `UPDATE Tipo_Oferta SET estado = ?, Carreras_idCarrera = ? WHERE idtipo_oferta = ?`
+    db.query(query, [estado, tipo_oferta, id], (err, result) => {
+      if(err) {
+        res.status(404).json({ message: err.message });
+      }
+      res.status(200).json({ succes: true, message: 'Oferta Actualizada!'});
+    }) 
+  } catch (error) {
+    res.status(404).json({ message: error.message });
+  }
+})
+
+app.delete("/companies/:id", async(req,res) => {
+  try {
+  let id = req.params.id;
+  const query = `DELETE FROM Empresas WHERE id = ?`
+    db.query(query, [id], (err, result) => {
+      if(err) {
+        res.status(404).json({ message: err.message });
+      }
+      res.status(200).json({ succes: true, message: 'Empresa Eliminada'});
+    }) 
+  } catch (error) {
+    res.status(404).json({ message: error.message });
+  }
+})
+
+
