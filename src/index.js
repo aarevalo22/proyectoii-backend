@@ -157,4 +157,45 @@ app.delete("/companies/:id", async(req,res) => {
   }
 })
 
+app.put("/usuarios/:id", async(req,res) => {
+  try {
+  let { nombres, apellidos, telefono } = req.body;
+  let userId = req.params.id
+  const query = `UPDATE Usuarios SET nombres = ?, apellidos = ?, telefono = ? where id = ?`
+  db.query(query, [nombres, apellidos, telefono, userId ], (err, result) => {
+    if(err) {
+      res.status(404).json({ message: err.message });
+    }
+    res.status(200).json({ succes: true, message: 'Información actualizada!'});
+  })
+  } catch (error) {
+    res.status(404).json({ message: error.message });
+  }
+})
+
+
+app.post("/postularse", async(req, res) => {
+  try {
+    let {userId, empresaId} = req.body
+
+    const query = `INSERT INTO Nostificacion (fecha_envio, id_detinatario, contenido) VALUES ( CURRENT_DATE, ?, ?)`
+    db.query(query, [empresaId, "Correo Enviado"], (err, result) => {
+      if(err) {
+        res.status(404).json({ message: err.message });
+      }
+      let queryPostulacion = `INSERT INTO Postulaciones (Estado, fecha, Notificacion_idNotificacion) VALUES (?, CURRENT_DATE, ?)`
+      db.query(queryPostulacion, [true, result.insertId], (err, result) => {
+        if(err) {
+          res.status(404).json({ message: err.message });
+        }
+      })
+
+      res.status(200).json({ succes: true, message: 'Información actualizada!'});
+    })
+    
+  } catch (error) {
+    res.status(404).json({ message: error.message });
+  }
+})
+
 
